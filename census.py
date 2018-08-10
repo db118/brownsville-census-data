@@ -2,53 +2,67 @@ from bs4 import BeautifulSoup
 import requests
 import os
 
-"""
-   Writes to a specified csv file
-"""
 def write_to_csv(filename, string_datas):
+    """
+    Writes to a specified csv file
+    """
     with open(filename, 'a') as fopen:
         fopen.write((' | ').join(string_datas) + '\n')
 
-"""
-   Scrapes data from the US census bureau and stores it in a  
-   specified csv file
-"""
-def main():
-    location = "brownsvillecitytexas,US"
-    
-    # Get desired location data from US census bureau
-    page = requests.get('https://www.census.gov/quickfacts/fact/table/'+ location +'/PST045217')
+def is_cityname_in_title(page_selectors, city_name):
+    return str(page_selectors.find(class_='qf-titlebar').h2.contents[0]).lower().split(" ")[0] == city_name
 
-    # Create a BeautifulSoup object
-    soup = BeautifulSoup(page.text, 'html.parser')
 
-    filename = "test_data.csv"
+def get_city_information(city_name, state_name):
+    """
+    Get a HTTP Response for a particular city and state
+    """
+    location = city_name+"city"+state_name+",US"
+    city_information = requests.get('https://www.census.gov/quickfacts/fact/table/' + location + '/PST045217')
+    page_selectors = BeautifulSoup(city_information.text, 'html.parser')
+    if is_cityname_in_title(page_selectors, city_name):
+        return city_information
+    return None
 
+def clear_csv_file(filename):
+    """
+    Removes csv file
+    """
     if(os.path.exists(filename)):
         os.remove(filename)
 
-    # Get graph table
-    div_tables = soup.find(class_='qf-facttable')
-    tables = div_tables.find_all(class_='type')[1:]
-    for index,table in enumerate(tables):
-        sections = table.find_all('tbody')
-        for section in sections:
-            rows = section.find_all('tr')[1:]
-            for row in rows:
-                columns = row.find_all('td')
-                string_columns = []
-                for index, column in enumerate(columns):
-                    if index == 0:
-                        string_columns.append(column.find('span').contents[0])
-                    else:
-                        if(column.find('a')):
-                            data = column.find('a')
-                            if(data.contents[0] == "NA"):
-                                string_columns.append('NA')
-                            else:
-                                string_columns.append('X')
-                        else:
-                            string_columns.append(column.contents[-1])
+def get_row_information(info_columns):
+    row_information = []
+    for index, column in enumerate(info_columns):
+        if index == 0:
+            row_information.append(column.find('span').contents[0])
+        else:
+            if(column.find('a')):
+                row_information.append('X')
+            else:
+                row_information.append(column.contents[-1])
+    return row_information
+
+def get_html_tables(soup):
+    return soup.find(class_='qf-facttable').find_all(class_='type')[1:]  # Get graph table
+
+def main():
+    """
+    Scrapes data from the US census bureau and stores it in a  
+    specified csv file
+   """
+    filename = "test_data.csv"
+    clear_csv_file(filename)
+    city_information = get_city_information("brownsville","texas")
+    if not city_information:
+        print("City information does not exist")
+        return -1
+    soup = BeautifulSoup(city_information.text, 'html.parser')
+    html_tables = get_html_tables(soup)
+    for table in html_tables:
+        for section in table.find_all('tbody'):
+            for row in section.find_all('tr')[1:]:
+                string_columns = get_row_information(row.find_all('td'))
                 write_to_csv(filename, string_columns)
 
                 
