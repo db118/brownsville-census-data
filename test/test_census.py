@@ -1,5 +1,5 @@
 import unittest
-import census
+from src import census
 
 
 class TestRunner(unittest.TestCase):

@@ -3,6 +3,33 @@
 Data is scraped from the [United States Census Bureau](https://www.census.gov)
 
 
+## Prerequisites
+
+```
+$: brew install python3
+
+$: pip3 install virtualenv
+
+$: git clone git@github.com:darrylbalderas/brownsville-census-data.git
+
+$: cd brownsville-census-data
+
+$: python3 -m venv ./venv
+
+$: source venv/bin/activate  
+
+$: pip install -r requirements.txt
+```
+
+To stop python virtual environment 
+
+`$: deactivate`
+
+To freeze your python dependencies
+
+`$: pip freeze > requirements.txt`
+
+
 
 ## Example of the data being scraped and formated in a csv 
 Categories | Brownsville, TX | United States
