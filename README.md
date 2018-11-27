@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/darrylbalderas/brownsville-census-data.svg?branch=master)](https://travis-ci.org/darrylbalderas/brownsville-census-data)
+
 ![census bureau](https://upload.wikimedia.org/wikipedia/commons/1/16/U.S._Census_Bureau_logo_post-2011.png)
 
 Data is scraped from the [United States Census Bureau](https://www.census.gov)

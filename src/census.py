@@ -9,14 +9,14 @@ def write_to_csv(filename, string_data):
     Writes to a specified csv file
     """
     with open(filename, 'a') as fopen:
-        fopen.write((' | ').join(string_data) + '\n')
+        fopen.write(' | '.join(string_data) + '\n')
 
 
 def is_cityname_in_title(page_selectors, city_name):
     h2_content = page_selectors.find(class_='qf-titlebar').h2.contents
-    if h2_content:
-        return str(h2_content[0]).lower().split(" ")[0] == city_name
-    return False
+    if not h2_content:
+        return False
+    return str(h2_content[0]).lower().split(" ")[0] == city_name
 
 
 def get_city_information(city_name, state_name):
@@ -34,29 +34,20 @@ def get_city_information(city_name, state_name):
     return city_information
 
 
-def clear_csv_file(filename):
-    """
-    Removes csv file
-    """
-    if os.path.exists(filename):
-        os.remove(filename)
-
-
 def get_row_information(info_columns):
     row_information = []
-    for index, column in enumerate(info_columns):
-        if index == 0:
-            row_information.append(column.find('span').contents[0])
+    if len(info_columns) == 0:
+        return row_information
+    row_information.append(info_columns[0].find('span').contents[0])
+    for column in info_columns:
+        if column.find('a'):
+            row_information.append('X')
         else:
-            if column.find('a'):
-                row_information.append('X')
-            else:
-                row_information.append(column.contents[-1])
+            row_information.append(column.contents[-1])
     return row_information
 
 
 def get_html_tables(soup):
-    # Get html graph table
     return soup.find(class_='qf-facttable').find_all(class_='type')[1:]
 
 
@@ -65,16 +56,30 @@ def main():
     Scrapes data from the US census bureau and stores it in a
     specified csv file
     """
-    filename = "test_data.csv"
-    clear_csv_file(filename)
-    city_information = get_city_information("brownsville", "texas")
-    soup = BeautifulSoup(city_information.text, 'html.parser')
+    city_name = "brownsville"
+    state_name = "texas"
+    city_information = get_city_information(city_name, state_name)
+    soup = BeautifulSoup(city_information.content, 'html.parser')
     html_tables = get_html_tables(soup)
+    scrap_html_tables(html_tables)
+
+
+def clear_csv_file(filename):
+    """
+    Resets csv file
+    """
+    if os.path.exists(filename):
+        os.remove(filename)
+
+
+def scrap_html_tables(html_tables):
+    clear_csv_file(config.FILE_NAME)
     for table in html_tables:
         for section in table.find_all('tbody'):
             for row in section.find_all('tr')[1:]:
-                string_columns = get_row_information(row.find_all('td'))
-                write_to_csv(filename, string_columns)
+                table_row_data = row.find_all('td')
+                row_data = get_row_information(table_row_data)
+                write_to_csv(config.FILE_NAME, row_data)
 
 
 if __name__ == "__main__":
